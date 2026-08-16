@@ -13,20 +13,14 @@
 
 Este bot permite a los gremios de **Albion Online** (o cualquier comunidad en Discord) implementar un **sistema de misiones y recompensas** basado en puntos. Los oficiales pueden crear tareas, los miembros reportan su cumplimiento, y el staff aprueba o rechaza las solicitudes. Todo queda registrado en una base de datos MySQL, y se genera automáticamente un **ranking público** con los puntos acumulados.
 
----
-
-## ✨ Características principales
-
-- ✅ **Configuración por servidor** – Cada gremio tiene su propio nombre, canales y rol de oficiales.
-- ✅ **Creación de tareas** – Oficiales definen nombre, puntos, descripción y si es repetible.
-- ✅ **Edición y desactivación** – Permite modificar tareas existentes o darlas de baja sin perder el historial.
-- ✅ **Sistema de reportes** – Los miembros reportan tareas completadas con evidencia opcional.
-- ✅ **Flujo de aprobación** – Oficiales revisan, aprueban o rechazan los reportes con notificaciones por DM.
-- ✅ **Ranking automático** – Clasificación global de los miembros según puntos acumulados.
-- ✅ **Estadísticas personales** – Cada miembro consulta sus puntos y posición en el ranking.
-- ✅ **Comandos Slash** – Totalmente integrado con la interfaz moderna de Discord.
-- ✅ **Mensajes Directos (DM)** – Notificaciones automáticas al aprobar o rechazar tareas.
-- ✅ **Historial completo** – Todas las transacciones quedan registradas para auditoría.
+**Características clave:**
+- ✅ Configuración por servidor (nombre, canales, rol de oficiales).
+- ✅ Creación, edición y desactivación de tareas con puntos.
+- ✅ Sistema de reportes con evidencia opcional.
+- ✅ Flujo de aprobación/rechazo con notificaciones por DM.
+- ✅ Ranking global y estadísticas personales.
+- ✅ Comandos Slash integrados y mensajes efímeros.
+- ✅ Historial completo para auditoría.
 
 ---
 
@@ -36,25 +30,25 @@ Este bot permite a los gremios de **Albion Online** (o cualquier comunidad en Di
 |---------|--------------|-------------|
 | `/setup` | Administrador | Configura el gremio (nombre, canales, rol de oficiales). |
 | `/add-task` | Oficial | Crea una nueva tarea (nombre, puntos, descripción, repetible). |
-| `/edit-task` | Oficial | Modifica los campos de una tarea existente (parcial o totalmente). |
+| `/edit-task` | Oficial | Modifica campos de una tarea existente (parcial o total). |
 | `/delete-task` | Oficial | Desactiva una tarea (ya no aparece en el listado). |
-| `/list-tasks` | Todos | Muestra todas las tareas activas disponibles. |
-| `/complete-task` | Miembro | Reporta la finalización de una tarea (con evidencia opcional). |
-| `/review-tasks` | Oficial | Lista todos los reportes pendientes de revisión. |
-| `/approve-task` | Oficial | Aprueba un reporte, otorga puntos y envía DM al usuario. |
-| `/reject-task` | Oficial | Rechaza un reporte, envía DM con el motivo al usuario. |
+| `/list-tasks` | Todos | Muestra las tareas activas (hasta 20, con embed). |
+| `/complete-task` | Miembro | Reporta la finalización de una tarea (evidencia opcional). |
+| `/review-tasks` | Oficial | Lista los reportes pendientes de revisión. |
+| `/approve-task` | Oficial | Aprueba un reporte, otorga puntos y envía DM. |
+| `/reject-task` | Oficial | Rechaza un reporte, envía DM con el motivo. |
 | `/ranking` | Todos | Muestra el Top N de jugadores con más puntos. |
-| `/my-points` | Todos | Consulta tus puntos acumulados y tu posición en el ranking. |
-| `/sync` | Administrador | Sincroniza los comandos slash manualmente (útil tras actualizaciones). |
+| `/my-points` | Todos | Consulta tus puntos y posición en el ranking. |
 
 ---
 
 ## 🛠️ Requisitos previos
 
-- **Python 3.10 o superior**
-- **MySQL 8.0** (o MariaDB 10.5+)
-- **Cuenta de Discord Developer** (para crear el bot y obtener el token)
-- **Servidor de pruebas o producción** (local o VPS con Ubuntu 22.04)
+- **Python 3.10 o superior** (se recomienda 3.12, pero funciona con 3.13 con el paquete `audioop-lts`).
+- **MySQL 8.0** (o MariaDB 10.5+).
+- **Cuenta de Discord Developer** (para crear el bot y obtener el token).
+- **Servidor Linux** (Ubuntu 22.04 recomendado) para despliegue.
 
 ---
+
 
