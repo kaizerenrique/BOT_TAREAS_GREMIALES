@@ -67,28 +67,6 @@ async def on_ready():
         print(f"❌ Error sincronizando comandos: {e}")
 
 
-# main.py - Comando sync corregido
-@bot.tree.command(name="sync", description="Sincroniza los comandos slash manualmente (Solo Admin)")
-@commands.has_permissions(administrator=True)
-async def sync_commands(interaction: discord.Interaction):
-    # Respondemos de forma diferida para ganar tiempo (hasta 15 minutos)
-    await interaction.response.defer(ephemeral=True)
-    
-    try:
-        # Sincronizar el árbol de comandos globalmente
-        synced = await bot.tree.sync()
-        # Enviar mensaje de éxito usando followup (ya que la interacción está diferida)
-        await interaction.followup.send(
-            f"✅ Comandos sincronizados globalmente. Total: {len(synced)} comandos.",
-            ephemeral=True
-        )
-    except Exception as e:
-        await interaction.followup.send(
-            f"❌ Error al sincronizar: {str(e)}",
-            ephemeral=True
-        )
-
-
 if __name__ == "__main__":
     if not TOKEN:
         print("Error: No se ha definido el token. Revisa tu archivo .env")
