@@ -155,6 +155,13 @@ class ReportsCog(commands.Cog):
             (report['user_id'], server_id, report['points'], report['points'])
         )
 
+        # Registrar la transacción
+        await execute_query(
+            """INSERT INTO point_transactions (user_id, server_id, amount, reason, performed_by) 
+            VALUES (%s, %s, %s, %s, %s)""",
+            (report['user_id'], server_id, report['points'], f"Tarea completada: {report['task_name']}", reviewer_id)
+        )
+
         # 4. Enviar un Mensaje Directo al usuario
         usuario = self.bot.get_user(int(report['user_id']))
         if usuario:

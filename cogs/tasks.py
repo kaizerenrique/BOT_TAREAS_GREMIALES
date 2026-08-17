@@ -1,12 +1,103 @@
 """
 Cog de Gestión de Tareas.
-Permite a los oficiales crear tareas y a los miembros listarlas.
+Permite a los oficiales crear, editar, desactivar tareas y a los miembros listarlas con paginación.
 """
 import discord
 from discord import app_commands
 from discord.ext import commands
 from utils.db import execute_query, fetch_all, fetch_one
 from utils.helpers import is_officer
+
+
+class TaskPaginator(discord.ui.View):
+    """Vista con botones para paginar la lista de tareas."""
+    def __init__(self, tasks: list, user_id: int, page: int = 1, items_per_page: int = 5):
+        super().__init__(timeout=60)  # La vista expira después de 60 segundos
+        self.tasks = tasks
+        self.user_id = user_id
+        self.page = page
+        self.items_per_page = items_per_page
+        self.total_pages = (len(tasks) + items_per_page - 1) // items_per_page if tasks else 1
+
+        # Ajustar la página si está fuera de rango
+        if self.page < 1:
+            self.page = 1
+        if self.page > self.total_pages:
+            self.page = self.total_pages
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        """Habilita o deshabilita los botones según la página actual."""
+        for child in self.children:
+            if child.custom_id == "previous":
+                child.disabled = (self.page <= 1)
+            elif child.custom_id == "next":
+                child.disabled = (self.page >= self.total_pages)
+
+    def get_embed(self) -> discord.Embed:
+        """Genera el embed para la página actual."""
+        start = (self.page - 1) * self.items_per_page
+        end = start + self.items_per_page
+        page_tasks = self.tasks[start:end]
+
+        embed = discord.Embed(
+            title="📋 Lista de Tareas Activas",
+            description=f"Página {self.page}/{self.total_pages} · Total: {len(self.tasks)} tareas",
+            color=discord.Color.blue()
+        )
+
+        for t in page_tasks:
+            name = f"ID #{t['id']} - {t['name']}"
+            value = f"🏅 **{t['points']} pts** | Repetible: {'✅' if t['repeatable'] else '❌'}"
+            if t['description']:
+                # Truncar descripciones largas
+                desc = t['description'][:100] + ('...' if len(t['description']) > 100 else '')
+                value += f"\n📝 {desc}"
+            embed.add_field(name=name, value=value, inline=False)
+
+        embed.set_footer(text="Usa los botones para navegar · La vista expira en 60s")
+        return embed
+
+    async def on_timeout(self):
+        """Cuando la vista expira, deshabilitamos todos los botones."""
+        for child in self.children:
+            child.disabled = True
+        # Intentamos editar el mensaje original para reflejar el timeout
+        try:
+            await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Anterior", style=discord.ButtonStyle.primary, custom_id="previous")
+    async def previous_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Botón para ir a la página anterior."""
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("❌ No puedes usar esta paginación.", ephemeral=True)
+            return
+
+        if self.page <= 1:
+            await interaction.response.send_message("⚠️ Ya estás en la primera página.", ephemeral=True)
+            return
+
+        self.page -= 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Siguiente ▶", style=discord.ButtonStyle.primary, custom_id="next")
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Botón para ir a la página siguiente."""
+        if interaction.user.id != self.user_id:
+            await interaction.response.send_message("❌ No puedes usar esta paginación.", ephemeral=True)
+            return
+
+        if self.page >= self.total_pages:
+            await interaction.response.send_message("⚠️ Ya estás en la última página.", ephemeral=True)
+            return
+
+        self.page += 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
 
 
 class TasksCog(commands.Cog):
@@ -81,7 +172,7 @@ class TasksCog(commands.Cog):
 
     @app_commands.command(name="list-tasks", description="Muestra la lista de tareas activas disponibles")
     async def list_tasks(self, interaction: discord.Interaction):
-        """Lista todas las tareas activas para que los miembros las vean."""
+        """Lista todas las tareas activas con paginación."""
         server_id = str(interaction.guild_id)
 
         tasks = await fetch_all(
@@ -96,31 +187,31 @@ class TasksCog(commands.Cog):
             )
             return
 
-        # Limitar a 20 tareas para evitar mensajes largos
-        max_display = 20
-        total_tasks = len(tasks)
-        tasks_to_show = tasks[:max_display]
+        # Si hay 5 o menos tareas, mostramos sin paginación (embed simple)
+        if len(tasks) <= 5:
+            embed = discord.Embed(
+                title="📋 Lista de Tareas Activas",
+                description=f"Total: **{len(tasks)}** tareas disponibles.",
+                color=discord.Color.blue()
+            )
+            for t in tasks:
+                name = f"ID #{t['id']} - {t['name']}"
+                value = f"🏅 **{t['points']} pts** | Repetible: {'✅' if t['repeatable'] else '❌'}"
+                if t['description']:
+                    desc = t['description'][:100] + ('...' if len(t['description']) > 100 else '')
+                    value += f"\n📝 {desc}"
+                embed.add_field(name=name, value=value, inline=False)
 
-        # Crear un embed
-        embed = discord.Embed(
-            title="📋 Lista de Tareas Activas",
-            description=f"Total: **{total_tasks}** tareas disponibles.",
-            color=discord.Color.blue()
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        # Paginación
+        paginator = TaskPaginator(tasks, interaction.user.id)
+        await interaction.response.send_message(
+            embed=paginator.get_embed(),
+            view=paginator,
+            ephemeral=True
         )
-
-        # Agrupar en campos para mejor visualización
-        for t in tasks_to_show:
-            # Formato: ID, Nombre, Puntos, Repetible
-            name = f"ID #{t['id']} - {t['name']}"
-            value = f"🏅 **{t['points']} pts** | Repetible: {'✅' if t['repeatable'] else '❌'}"
-            if t['description']:
-                value += f"\n📝 {t['description'][:100]}"  # Trunca descripciones largas
-            embed.add_field(name=name, value=value, inline=False)
-
-        if total_tasks > max_display:
-            embed.set_footer(text=f"Mostrando {max_display} de {total_tasks} tareas. Usa /list-tasks con filtros para más.")
-
-        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(name="delete-task", description="Desactiva una tarea (ya no estará disponible) (Solo Oficiales)")
     async def delete_task(self, interaction: discord.Interaction, task_id: int):

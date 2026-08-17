@@ -47,3 +47,16 @@ CREATE TABLE IF NOT EXISTS task_reports (
     INDEX idx_status_server (status, server_id),
     INDEX idx_user_server (user_id, server_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabla de transacciones de puntos
+CREATE TABLE IF NOT EXISTS point_transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(20) NOT NULL,
+    server_id VARCHAR(20) NOT NULL,
+    amount INT NOT NULL COMMENT 'Positivo = suma, Negativo = resta',
+    reason VARCHAR(255) NOT NULL COMMENT 'Motivo de la transacción',
+    performed_by VARCHAR(20) NOT NULL COMMENT 'ID del oficial que realizó la operación',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_server (user_id, server_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
